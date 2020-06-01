@@ -13,6 +13,9 @@
 using namespace cv;
 using namespace std;
 
+/*함수 통합 과정에서 Mat ractangle이 사라지고 Mat input_origin_image에 사각형 그리는 걸로 바뀌었습니다.
+Mat input_origin_image 변수명 수정 요망(제가 수정하면 혼란할것같아 수정 안했어요) output에도 사용되니 그냥 sentence_image가 좋을듯: 옵션
+*/
 
 /*이미지 computer 출력 함수*/
 void printWindow(string nameTag, Mat inputImg) {
@@ -34,33 +37,6 @@ void ROI_save(Mat &Input, Rect rect, int cnt) {
 	string name = "num" + char_num + ".jpg";
 	//저장
 	imwrite(name, roi);
-}
-/*이미지 글자에 맞춰 사각형 그리기*/
-//이진화 이미지(input)와 RGB이미지(output)를 매개변수로 받음
-Mat drawingRectangle(Mat &inputImg, Mat &output) {
-	Mat Rectangle = output.clone(); //RGB이미지 복사
-	int cnt = 0; //이미지 저장 이름 구별을 위한 변수
-
-	//이진화 이미지에서 외곽선 찾기
-	std::vector<vector<Point>> contours;
-	std::vector<Vec4i> hierarchy;
-
-	findContours(inputImg, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
-
-	//외곽선에 맞춰 사각형 그리기
-	if (contours.size() > 0) {
-		for (int idx = 0; idx < contours.size(); idx++) {
-			Rect rect = boundingRect(contours[idx]);
-			//너무 작거나 너무 큰 사각형은 제외
-			if (rect.width < 50 && rect.height >100 && rect.height * rect.width > 2000) { 
-				rectangle(Rectangle, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 5);
-				ROI_save(output, rect, cnt); //저장 함수 부르기
-				cnt++;
-			}
-		}
-	}
-	return Rectangle; //사각형이 그려진 이미지 반환
-
 }
 
 int main()
@@ -93,14 +69,33 @@ int main()
 	//팽창 연산, 이미지의 하얀부분을 팽창시킨다 (입력이미지, 출력이미지,...,반복횟수)
 	dilate(result_binary_image, result_binary_image, mask, cv::Point(-1, -1), 3);
 	
-	//사각형 그려진 이미지 받기
-	Mat Rectangle = drawingRectangle(result_binary_image, input_origin_image);
+
+	int cnt = 0; //이미지 저장 이름 구별을 위한 변수
+
+	//이진화 이미지에서 외곽선 찾기
+	std::vector<vector<Point>> contours;
+	std::vector<Vec4i> hierarchy;
+
+	findContours(result_binary_image, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+	//외곽선에 맞춰 사각형 그리기
+	if (contours.size() > 0) {
+		for (int idx = 0; idx < contours.size(); idx++) {
+			Rect rect = boundingRect(contours[idx]);
+			//너무 작거나 너무 큰 사각형은 제외
+			if (rect.width < 50 && rect.height >100 && rect.height * rect.width > 2000) {
+				rectangle(input_origin_image, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 3);
+				ROI_save(input_origin_image, rect, cnt); //저장 함수 부르기
+				cnt++;
+			}
+		}
+	}
+
 
 
 	//출력
-	printWindow("입력 이미지", input_origin_image);
 	printWindow("이진화 이미지", result_binary_image);
-	printWindow("rectangle", Rectangle);
+	printWindow("rectangle", input_origin_image);
 
 	//아무키나 누를 때 까지 대기한다.
 	while (cv::waitKey(0) < 0);
