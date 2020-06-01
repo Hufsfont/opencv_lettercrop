@@ -8,7 +8,7 @@
 
 #include <opencv2/core/core.hpp>
 
-#include<string>
+#include <string>
 
 using namespace cv;
 using namespace std;
@@ -27,18 +27,18 @@ void printWindow(string nameTag, Mat inputImg) {
 	imshow(nameTag, inputImg);
 
 }
-/*사각형으로 잘린 이미지 computer 프로젝트 내부 폴더에 저장*/
+/*사각형으로 잘린 이미지 computer 프로젝트 내부 폴더에 저장
 //RGB이미지와 사각형 이름구별변수를 매개변수로 받음
-void ROI_save(Mat &Input, Rect rect, int cnt) {
-	//이미지 사각형으로 필요한 부분 자르기
-	Mat roi = Input(rect);
-	//저장 이름 생성
-	string char_num = to_string(cnt);
-	string name = "num" + char_num + ".jpg";
-	//저장
-	imwrite(name, roi);
-}
-
+				void ROI_save(Mat &Input, Rect rect, int cnt) {
+					//이미지 사각형으로 필요한 부분 자르기
+					Mat roi = Input(rect);
+					//저장 이름 생성
+					string char_num = to_string(cnt);
+					string name = "num" + char_num + ".jpg";
+					//저장
+					imwrite(name, roi);
+				}
+*/
 int main()
 
 {
@@ -85,13 +85,16 @@ int main()
 			//너무 작거나 너무 큰 사각형은 제외
 			if (rect.width < 50 && rect.height >100 && rect.height * rect.width > 2000) {
 				rectangle(input_origin_image, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 3);
-				ROI_save(input_origin_image, rect, cnt); //저장 함수 부르기
+				Mat roi = input_origin_image(rect); //CROP
+				//저장 이름 생성
+				string char_num = to_string(cnt);
+				string name = "num" + char_num + ".jpg";
+				//저장
+				imwrite(name, roi);
 				cnt++;
 			}
 		}
 	}
-
-
 
 	//출력
 	printWindow("이진화 이미지", result_binary_image);
