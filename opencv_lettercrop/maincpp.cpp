@@ -13,9 +13,6 @@
 using namespace cv;
 using namespace std;
 
-/*함수 통합 과정에서 Mat ractangle이 사라지고 Mat input_origin_image에 사각형 그리는 걸로 바뀌었습니다.
-Mat input_origin_image 변수명 수정 요망(제가 수정하면 혼란할것같아 수정 안했어요) output에도 사용되니 그냥 sentence_image가 좋을듯: 옵션
-*/
 
 /*이미지 computer 출력 함수*/
 void printWindow(string nameTag, Mat inputImg) {
@@ -27,23 +24,12 @@ void printWindow(string nameTag, Mat inputImg) {
 	imshow(nameTag, inputImg);
 
 }
-/*사각형으로 잘린 이미지 computer 프로젝트 내부 폴더에 저장
-//RGB이미지와 사각형 이름구별변수를 매개변수로 받음
-				void ROI_save(Mat &Input, Rect rect, int cnt) {
-					//이미지 사각형으로 필요한 부분 자르기
-					Mat roi = Input(rect);
-					//저장 이름 생성
-					string char_num = to_string(cnt);
-					string name = "num" + char_num + ".jpg";
-					//저장
-					imwrite(name, roi);
-				}
-*/
+
 int main()
 
 {
 	//이미지 파일을 불러와 그레이 이미지로 변환한다.  
-	Mat input_origin_image = imread("pengram02.jpg", IMREAD_COLOR);
+	Mat input_origin_image = imread("pengram.jpg", IMREAD_COLOR);
 	Mat input_gray_image;
 	Mat result_binary_image;
 	Mat kernel(3, 3, CV_8U, cv::Scalar(1));
@@ -82,8 +68,9 @@ int main()
 	if (contours.size() > 0) {
 		for (int idx = 0; idx < contours.size(); idx++) {
 			Rect rect = boundingRect(contours[idx]);
-			//너무 작거나 너무 큰 사각형은 제외
-			if (rect.width < 50 && rect.height >100 && rect.height * rect.width > 2000) {
+			printf("%d, %d\n", rect.width, rect.height);
+			//너무 작거나 너무 큰 사각형은 제외 (수정)
+			if (rect.width < 60 && rect.height >70 && rect.height * rect.width > 1500) {
 				rectangle(input_origin_image, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 3);
 				Mat roi = input_origin_image(rect); //CROP
 				//저장 이름 생성
