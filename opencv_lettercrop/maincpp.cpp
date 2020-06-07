@@ -46,9 +46,10 @@ int main()
 	/*이진화*/
 	Mat mask = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5), cv::Point(1, 1)); //delite연산 kernal 크기
 	//이미지를 부드럽게 만듦 (입력이미지,출력이미지,...)
-	GaussianBlur(input_gray_image, input_gray_image, cv::Point(5, 5), 0);
+	//GaussianBlur(input_gray_image, input_gray_image, cv::Point(5, 5), 0);
 	//이미지를 이진화 (입력이미지,출력이미지,...)
-	adaptiveThreshold(input_gray_image, result_binary_image, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 29, 7);
+	adaptiveThreshold(input_gray_image, result_binary_image, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 29, 3);
+	printWindow("이미지", result_binary_image);
 	//이미지 잡음 제거 (입력이미지,출력이미지...)
 	morphologyEx(result_binary_image, result_binary_image, cv::MORPH_CLOSE, kernel); //close
 	//색 반전: deliate연산을 위해
@@ -67,11 +68,12 @@ int main()
 	if (contours.size() > 0) {
 		for (int idx = 0, i=0; idx < contours.size(); idx++) {
 			Rect rect = boundingRect(contours[idx]);
+			printf("x: %d, y: %d, width: %d, height: %d\n", rect.x, rect.y, rect.width, rect.height);
 			//알맞은 사각형 조건 (수정)
-			if (rect.width < 2000 && rect.height > 290 && rect.height * rect.width > 200000) {
-				//printf("x: %d, y: %d, width: %d, height: %d\n", rect.x, rect.y, rect.width, rect.height); //디버깅
+			if (rect.width < 2000 && rect.height > 200 && rect.height * rect.width > 160000) {
+				printf("***x: %d, y: %d, width: %d, height: %d\n", rect.x, rect.y, rect.width, rect.height); //디버깅
 				//rectangle 함수는 사각형이 잘 그려지는 지 눈으로 보려고 쓰던거, 삭제해도 상관없음
-				//rectangle(input_origin_image, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 7);
+				rectangle(input_origin_image, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 7);
 				
 				
 				Mat roi = input_origin_image(rect); //CROP
