@@ -30,7 +30,7 @@ int main()
 
 {
 	//이미지 파일을 불러와 그레이 이미지로 변환한다.  
-	Mat input_origin_image = imread("pengram01.jpg", IMREAD_COLOR);
+	Mat input_origin_image = imread("pengram03.jpg", IMREAD_COLOR);
 	Mat input_gray_image;
 	Mat result_binary_image;
 	Mat kernel(3, 3, CV_8U, cv::Scalar(1));
@@ -44,11 +44,11 @@ int main()
 
 
 	/*이진화*/
-	Mat mask = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5), cv::Point(1, 1)); //delite연산 kernal 크기
+	Mat mask = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7), cv::Point(1, 1)); //delite연산 kernal 크기
 	//이미지를 부드럽게 만듦 (입력이미지,출력이미지,...)
-	//GaussianBlur(input_gray_image, input_gray_image, cv::Point(5, 5), 0);
+	GaussianBlur(input_gray_image, input_gray_image, cv::Point(5, 5), 0);
 	//이미지를 이진화 (입력이미지,출력이미지,...)
-	adaptiveThreshold(input_gray_image, result_binary_image, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 29, 3);
+	adaptiveThreshold(input_gray_image, result_binary_image, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 27, 4);
 	printWindow("이미지", result_binary_image);
 	//이미지 잡음 제거 (입력이미지,출력이미지...)
 	morphologyEx(result_binary_image, result_binary_image, cv::MORPH_CLOSE, kernel); //close
@@ -63,31 +63,43 @@ int main()
 
 	findContours(result_binary_image, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-	/////////////////////////////////////cnt변수를 i로 바꿨음(의미 NO)
+	Rect roiRect[10];//알맞은 사각형 배열
+	int i = 0;
 	//외곽선에 맞춰 사각형 찾기 
 	if (contours.size() > 0) {
-		for (int idx = 0, i=0; idx < contours.size(); idx++) {
+		for (int idx = 0; idx < contours.size(); idx++) {
 			Rect rect = boundingRect(contours[idx]);
-			printf("x: %d, y: %d, width: %d, height: %d\n", rect.x, rect.y, rect.width, rect.height);
-			//알맞은 사각형 조건 (수정)
-			if (rect.width < 2000 && rect.height > 200 && rect.height * rect.width > 160000) {
-				printf("***x: %d, y: %d, width: %d, height: %d\n", rect.x, rect.y, rect.width, rect.height); //디버깅
-				//rectangle 함수는 사각형이 잘 그려지는 지 눈으로 보려고 쓰던거, 삭제해도 상관없음
-				rectangle(input_origin_image, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 7);
-				
-				
-				Mat roi = input_origin_image(rect); //CROP
-				//저장 이름 생성
-				string char_num = to_string(i);
-				string name = "num" + char_num + ".jpg";
-				//저장
-				imwrite(name, roi);
+			//printf("x: %d, y: %d, width: %d, height: %d\n", rect.x, rect.y, rect.width, rect.height); //디버깅
+			//알맞은 사각형 조건
+			if (rect.width > 720 && rect.width < 2000 && rect.height > 190 && rect.height * rect.width > 130000) {
+				//printf("***x: %d, y: %d, width: %d, height: %d\n", rect.x, rect.y, rect.width, rect.height); //디버깅
+				//rectangle(input_origin_image, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 7); //디버깅
+				roiRect[i] = rect;
 				i++;
 			}
 		}
-
+		//printf("%d", i);
+		if (i != 10) {
+			printf("error: 팬그램 사진 크기를 최적화 해주세요\n");
+		}
 	}
-
+	//순서대로 정렬
+	for (int i = 0; i < 10; i++) {
+		for (int j = 0; j < 10 - i - 1; j++) {
+			if (roiRect[j].x > roiRect[j+1].x) {
+				Rect bff = roiRect[j];
+				roiRect[j] = roiRect[j + 1];
+				roiRect[j + 1] = bff;
+			}
+		}
+	}
+	//저장
+	for (int i = 0; i < 10; i++) {
+		Mat roi = input_origin_image(roiRect[i]); //CROP
+		string char_num = to_string(i);
+		string name = "num" + char_num + ".jpg";
+		imwrite(name, roi);
+	}
 
 	//출력
 	printWindow("이진화 이미지", result_binary_image);
