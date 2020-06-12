@@ -45,48 +45,49 @@ int main()
 
 	/*이진화*/
 	Mat mask = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7), cv::Point(1, 1)); //delite연산 kernal 크기
-	//이미지를 부드럽게 만듦 (입력이미지,출력이미지,...)
+																						   //이미지를 부드럽게 만듦 (입력이미지,출력이미지,...)
 	GaussianBlur(input_gray_image, input_gray_image, cv::Point(5, 5), 0);
 	//이미지를 이진화 (입력이미지,출력이미지,...)
-	adaptiveThreshold(input_gray_image, result_binary_image, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 27, 4);
+	adaptiveThreshold(input_gray_image, result_binary_image, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 27, 7);
 	printWindow("이미지", result_binary_image);
 	//이미지 잡음 제거 (입력이미지,출력이미지...)
 	morphologyEx(result_binary_image, result_binary_image, cv::MORPH_CLOSE, kernel); //close
-	//색 반전: deliate연산을 위해
-	bitwise_not(result_binary_image, result_binary_image); 
+																					 //색 반전: deliate연산을 위해
+	bitwise_not(result_binary_image, result_binary_image);
 	//팽창 연산, 이미지의 하얀부분을 팽창시킨다 (입력이미지, 출력이미지,...,반복횟수)
 	dilate(result_binary_image, result_binary_image, mask, cv::Point(-1, -1), 5);
-	
+
+
 	//이진화 이미지에서 외곽선 찾기
 	std::vector<vector<Point>> contours;
 	std::vector<Vec4i> hierarchy;
 
-	findContours(result_binary_image, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
+	findContours(result_binary_image, contours, hierarchy, RETR_CCOMP, CHAIN_APPROX_SIMPLE, Point(0, 0));
 
 	Rect roiRect[10];//알맞은 사각형 배열
-	int i = 0;
-	//외곽선에 맞춰 사각형 찾기 
 	if (contours.size() > 0) {
+		int hier;
 		for (int idx = 0; idx < contours.size(); idx++) {
 			Rect rect = boundingRect(contours[idx]);
-			//printf("x: %d, y: %d, width: %d, height: %d\n", rect.x, rect.y, rect.width, rect.height); //디버깅
-			//알맞은 사각형 조건
-			if (rect.width > 720 && rect.width < 2000 && rect.height > 190 && rect.height * rect.width > 130000) {
-				//printf("***x: %d, y: %d, width: %d, height: %d\n", rect.x, rect.y, rect.width, rect.height); //디버깅
+			if (rect.width > 2000) {
+				hier = idx;
 				//rectangle(input_origin_image, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 7); //디버깅
-				roiRect[i] = rect;
-				i++;
+			}
+		} //완료
+		for (int i = 0, j = 0; i < contours.size(); i++) {
+			//printf("hier: %d, i: %d H: %d\n", hier, i, hierarchy[i][3]);
+			if (hierarchy[i][3] == hier) {
+				roiRect[j] = boundingRect(contours[i]);
+				//rectangle(input_origin_image, Point(roiRect[j].x, roiRect[j].y), Point(roiRect[j].x + roiRect[j].width, roiRect[j].y + roiRect[j].height), Scalar(0, 0, 255), 7); //디버깅
+				j++;
 			}
 		}
-		//printf("%d", i);
-		if (i != 10) {
-			printf("error: 팬그램 사진 크기를 최적화 해주세요\n");
-		}
 	}
+	
 	//순서대로 정렬
 	for (int i = 0; i < 10; i++) {
 		for (int j = 0; j < 10 - i - 1; j++) {
-			if (roiRect[j].x > roiRect[j+1].x) {
+			if (roiRect[j].x > roiRect[j + 1].x) {
 				Rect bff = roiRect[j];
 				roiRect[j] = roiRect[j + 1];
 				roiRect[j + 1] = bff;
