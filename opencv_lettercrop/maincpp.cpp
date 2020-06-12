@@ -36,7 +36,7 @@ int main()
 	Mat kernel(3, 3, CV_8U, cv::Scalar(1));
 
 	//이미지 사이즈 조절
-	resize(input_origin_image, input_origin_image, Size(10000, 500), 0, 0);
+	resize(input_origin_image, input_origin_image, Size(10000, 500), INTER_AREA);
 
 	//원본 이미지를 그레이스케일 이미지로 변환
 	cvtColor(input_origin_image, input_gray_image, COLOR_RGBA2GRAY);
@@ -45,14 +45,13 @@ int main()
 
 	/*이진화*/
 	Mat mask = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7), cv::Point(1, 1)); //delite연산 kernal 크기
-																						   //이미지를 부드럽게 만듦 (입력이미지,출력이미지,...)
-	GaussianBlur(input_gray_image, input_gray_image, cv::Point(5, 5), 0);
+
 	//이미지를 이진화 (입력이미지,출력이미지,...)
 	adaptiveThreshold(input_gray_image, result_binary_image, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 27, 7);
 	printWindow("이미지", result_binary_image);
 	//이미지 잡음 제거 (입력이미지,출력이미지...)
 	morphologyEx(result_binary_image, result_binary_image, cv::MORPH_CLOSE, kernel); //close
-																					 //색 반전: deliate연산을 위해
+	//색 반전: deliate연산을 위해
 	bitwise_not(result_binary_image, result_binary_image);
 	//팽창 연산, 이미지의 하얀부분을 팽창시킨다 (입력이미지, 출력이미지,...,반복횟수)
 	dilate(result_binary_image, result_binary_image, mask, cv::Point(-1, -1), 5);
@@ -97,6 +96,7 @@ int main()
 	//저장
 	for (int i = 0; i < 10; i++) {
 		Mat roi = input_origin_image(roiRect[i]); //CROP
+		resize(roi, roi, Size(1000, 1000), INTER_LINEAR);
 		string char_num = to_string(i);
 		string name = "num" + char_num + ".jpg";
 		imwrite(name, roi);
